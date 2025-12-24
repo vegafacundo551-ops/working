@@ -217,28 +217,35 @@ function startFaceDetection() {
   if (state.faceDetectionActive || !state.cameraReady) {
     return;
   }
-  if (!window.FaceDetection) {
+  const FaceDetectionClass = window.FaceDetection;
+  if (typeof FaceDetectionClass !== "function") {
     showToast("Reconocimiento facial no disponible. Captura automatica.", "info");
     scheduleFallbackCapture();
     return;
   }
 
-  state.faceDetector = new window.FaceDetection.FaceDetection({
-    locateFile: (file) =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
-  });
-  state.faceDetector.setOptions({
-    model: "short",
-    minDetectionConfidence: 0.6,
-  });
-  state.faceDetector.onResults((results) => {
-    const hasFace =
-      results && results.detections && results.detections.length > 0;
-    if (hasFace && !state.autoCaptureDone) {
-      capturePhoto(true);
-      state.faceDetectionActive = false;
-    }
-  });
+  try {
+    state.faceDetector = new FaceDetectionClass({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+    });
+    state.faceDetector.setOptions({
+      model: "short",
+      minDetectionConfidence: 0.6,
+    });
+    state.faceDetector.onResults((results) => {
+      const hasFace =
+        results && results.detections && results.detections.length > 0;
+      if (hasFace && !state.autoCaptureDone) {
+        capturePhoto(true);
+        state.faceDetectionActive = false;
+      }
+    });
+  } catch (err) {
+    showToast("No se pudo iniciar el reconocimiento facial.", "error");
+    scheduleFallbackCapture();
+    return;
+  }
 
   state.faceDetectionActive = true;
   updateAutoStatus("Buscando rostro...");
@@ -253,6 +260,7 @@ function startFaceDetection() {
         await state.faceDetector.send({ image: elements.video });
       } catch (err) {
         state.faceDetectionActive = false;
+        scheduleFallbackCapture();
       } finally {
         state.faceDetectionInFlight = false;
       }
