@@ -25,7 +25,10 @@ const state = {
   hasSubmitted: false,
   cameraReady: false,
   autoCaptureDone: false,
-  autoCaptureTimer: null,
+  fallbackCaptureTimer: null,
+  faceDetector: null,
+  faceDetectionActive: false,
+  faceDetectionInFlight: false,
 };
 
 let supabaseClient = null;
@@ -97,7 +100,7 @@ async function initCamera() {
     elements.video.onloadedmetadata = () => {
       elements.video.play().catch(() => {});
       state.cameraReady = true;
-      scheduleAutoCapture();
+      startFaceDetection();
     };
     setStatus(elements.cameraStatus, "Lista", "ok");
   } catch (err) {
@@ -150,6 +153,9 @@ function resetPhoto() {
   setStatus(elements.selfieStatus, "Pendiente", "pending");
   state.hasSubmitted = false;
   state.autoCaptureDone = false;
+  state.faceDetectionActive = false;
+  state.faceDetectionInFlight = false;
+  window.clearTimeout(state.fallbackCaptureTimer);
   updateAutoStatus("Esperando selfie y ubicacion.");
   checkReadyAndSubmit();
 }
@@ -195,16 +201,66 @@ function capturePhoto(isAuto = false) {
   );
 }
 
-function scheduleAutoCapture() {
+function scheduleFallbackCapture() {
   if (state.autoCaptureDone || !state.cameraReady) {
     return;
   }
-  window.clearTimeout(state.autoCaptureTimer);
-  state.autoCaptureTimer = window.setTimeout(() => {
+  window.clearTimeout(state.fallbackCaptureTimer);
+  state.fallbackCaptureTimer = window.setTimeout(() => {
     if (!state.photoBlob && state.cameraReady) {
       capturePhoto(true);
     }
-  }, 900);
+  }, 1200);
+}
+
+function startFaceDetection() {
+  if (state.faceDetectionActive || !state.cameraReady) {
+    return;
+  }
+  if (!window.FaceDetection) {
+    showToast("Reconocimiento facial no disponible. Captura automatica.", "info");
+    scheduleFallbackCapture();
+    return;
+  }
+
+  state.faceDetector = new window.FaceDetection.FaceDetection({
+    locateFile: (file) =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+  });
+  state.faceDetector.setOptions({
+    model: "short",
+    minDetectionConfidence: 0.6,
+  });
+  state.faceDetector.onResults((results) => {
+    const hasFace =
+      results && results.detections && results.detections.length > 0;
+    if (hasFace && !state.autoCaptureDone) {
+      capturePhoto(true);
+      state.faceDetectionActive = false;
+    }
+  });
+
+  state.faceDetectionActive = true;
+  updateAutoStatus("Buscando rostro...");
+
+  const loop = async () => {
+    if (!state.faceDetectionActive || state.autoCaptureDone) {
+      return;
+    }
+    if (!state.faceDetectionInFlight) {
+      state.faceDetectionInFlight = true;
+      try {
+        await state.faceDetector.send({ image: elements.video });
+      } catch (err) {
+        state.faceDetectionActive = false;
+      } finally {
+        state.faceDetectionInFlight = false;
+      }
+    }
+    window.requestAnimationFrame(loop);
+  };
+
+  window.requestAnimationFrame(loop);
 }
 function isSupabaseConfigured() {
   return (
