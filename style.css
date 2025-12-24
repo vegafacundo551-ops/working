@@ -62,9 +62,7 @@ body::after {
 }
 
 .hero {
-  display: grid;
-  gap: 8px;
-  animation: fadeUp 0.7s ease both;
+  display: none;
 }
 
 .eyebrow {
