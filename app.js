@@ -10,9 +10,6 @@ const elements = {
   video: document.getElementById("video"),
   canvas: document.getElementById("photo-canvas"),
   preview: document.getElementById("photo-preview"),
-  captureBtn: document.getElementById("capture-btn"),
-  retakeBtn: document.getElementById("retake-btn"),
-  manualControls: document.getElementById("manual-controls"),
   retryBtn: document.getElementById("retry-permissions"),
   httpsWarning: document.getElementById("https-warning"),
   toast: document.getElementById("toast"),
@@ -28,7 +25,7 @@ const state = {
   hasSubmitted: false,
   cameraReady: false,
   autoCaptureDone: false,
-  manualFallbackTimer: null,
+  autoCaptureTimer: null,
 };
 
 let supabaseClient = null;
@@ -150,7 +147,6 @@ function resetPhoto() {
     state.photoUrl = null;
   }
   elements.preview.hidden = true;
-  elements.retakeBtn.hidden = true;
   setStatus(elements.selfieStatus, "Pendiente", "pending");
   state.hasSubmitted = false;
   state.autoCaptureDone = false;
@@ -190,7 +186,6 @@ function capturePhoto(isAuto = false) {
       state.photoUrl = URL.createObjectURL(blob);
       elements.preview.src = state.photoUrl;
       elements.preview.hidden = false;
-      elements.retakeBtn.hidden = false;
       state.autoCaptureDone = true;
       setStatus(elements.selfieStatus, "Lista", "ok");
       checkReadyAndSubmit();
@@ -204,19 +199,12 @@ function scheduleAutoCapture() {
   if (state.autoCaptureDone || !state.cameraReady) {
     return;
   }
-  window.clearTimeout(state.manualFallbackTimer);
-  state.manualFallbackTimer = window.setTimeout(() => {
-    if (!state.photoBlob && elements.manualControls) {
-      elements.manualControls.hidden = false;
-      showToast("Si lo necesitas, toma la selfie manualmente.", "info");
-    }
-  }, 5000);
-
-  window.setTimeout(() => {
+  window.clearTimeout(state.autoCaptureTimer);
+  state.autoCaptureTimer = window.setTimeout(() => {
     if (!state.photoBlob && state.cameraReady) {
       capturePhoto(true);
     }
-  }, 1000);
+  }, 900);
 }
 function isSupabaseConfigured() {
   return (
@@ -339,8 +327,6 @@ function checkReadyAndSubmit() {
 }
 
 function bindEvents() {
-  elements.captureBtn.addEventListener("click", () => capturePhoto(false));
-  elements.retakeBtn.addEventListener("click", resetPhoto);
   elements.retryBtn.addEventListener("click", () => {
     initCamera();
     initLocation();
@@ -354,9 +340,6 @@ function init() {
   setStatus(elements.locationStatus, "Pendiente", "pending");
   setStatus(elements.selfieStatus, "Pendiente", "pending");
   updateAutoStatus("Esperando selfie y ubicacion.");
-  if (elements.manualControls) {
-    elements.manualControls.hidden = true;
-  }
 
   if (!isSecureContext()) {
     elements.httpsWarning.hidden = false;

@@ -16,10 +16,9 @@
     <main class="app">
       <header class="hero">
         <p class="eyebrow">Reclutamiento movil</p>
-        <h1>Postulacion rapida con selfie y ubicacion</h1>
         <p class="subtitle">
-          Para continuar, permite camara y ubicacion GPS. La selfie debe ser en
-          tiempo real.
+          Para continuar, permite camara y ubicacion GPS. La selfie se captura
+          automaticamente.
         </p>
       </header>
 
@@ -76,14 +75,6 @@
           ></video>
           <canvas id="photo-canvas" hidden></canvas>
           <img id="photo-preview" alt="Selfie capturada" hidden />
-        </div>
-        <div class="button-row" id="manual-controls" hidden>
-          <button class="btn" type="button" id="capture-btn">
-            Tomar selfie
-          </button>
-          <button class="btn btn-outline" type="button" id="retake-btn" hidden>
-            Tomar otra
-          </button>
         </div>
         <p class="hint" id="camera-hint">
           Si la camara no se activa, revisa los permisos del navegador.
