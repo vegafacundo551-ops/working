@@ -92,39 +92,11 @@
 
       <section class="card form">
         <div class="card-title">
-          <h2>Tus datos</h2>
-          <span class="hint">Completa todos los campos.</span>
+          <h2>Envio automatico</h2>
+          <span class="hint">Se enviara al tener selfie y ubicacion.</span>
         </div>
-        <form id="postulation-form" autocomplete="on">
-          <label class="field">
-            Nombre completo
-            <input
-              type="text"
-              id="full-name"
-              name="nombre"
-              placeholder="Ej: Maria Lopez"
-              required
-              autocomplete="name"
-            />
-          </label>
-          <label class="field">
-            Telefono
-            <input
-              type="tel"
-              id="phone"
-              name="telefono"
-              placeholder="Ej: +54 9 11 1234 5678"
-              required
-              autocomplete="tel"
-            />
-          </label>
-          <button class="btn btn-primary" id="submit-btn" type="submit" disabled>
-            Enviar postulacion
-          </button>
-        </form>
-        <p class="hint">
-          No se puede enviar sin selfie y ubicacion. Tu informacion se guarda en
-          Supabase.
+        <p class="hint" id="auto-status">
+          Esperando selfie y ubicacion.
         </p>
       </section>
 

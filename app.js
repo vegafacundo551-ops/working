@@ -12,13 +12,10 @@ const elements = {
   preview: document.getElementById("photo-preview"),
   captureBtn: document.getElementById("capture-btn"),
   retakeBtn: document.getElementById("retake-btn"),
-  form: document.getElementById("postulation-form"),
-  fullName: document.getElementById("full-name"),
-  phone: document.getElementById("phone"),
-  submitBtn: document.getElementById("submit-btn"),
   retryBtn: document.getElementById("retry-permissions"),
   httpsWarning: document.getElementById("https-warning"),
   toast: document.getElementById("toast"),
+  autoStatus: document.getElementById("auto-status"),
 };
 
 const state = {
@@ -27,6 +24,7 @@ const state = {
   photoUrl: null,
   location: null,
   isSubmitting: false,
+  hasSubmitted: false,
 };
 
 function isSecureContext() {
@@ -53,13 +51,11 @@ function showToast(message, type = "info") {
   }, 4200);
 }
 
-function updateSubmitState() {
-  const ready =
-    !!state.photoBlob &&
-    !!state.location &&
-    elements.fullName.value.trim().length >= 3 &&
-    elements.phone.value.trim().length >= 6;
-  elements.submitBtn.disabled = !ready || state.isSubmitting;
+function updateAutoStatus(text) {
+  if (!elements.autoStatus) {
+    return;
+  }
+  elements.autoStatus.textContent = text;
 }
 
 function setLocationUI(location) {
@@ -122,7 +118,7 @@ function initLocation() {
       };
       setStatus(elements.locationStatus, "Lista", "ok");
       setLocationUI(state.location);
-      updateSubmitState();
+      checkReadyAndSubmit();
     },
     (err) => {
       state.location = null;
@@ -133,7 +129,7 @@ function initLocation() {
       } else {
         showToast("No pudimos obtener la ubicacion.", "error");
       }
-      updateSubmitState();
+      checkReadyAndSubmit();
     },
     { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
   );
@@ -148,7 +144,9 @@ function resetPhoto() {
   elements.preview.hidden = true;
   elements.retakeBtn.hidden = true;
   setStatus(elements.selfieStatus, "Pendiente", "pending");
-  updateSubmitState();
+  state.hasSubmitted = false;
+  updateAutoStatus("Esperando selfie y ubicacion.");
+  checkReadyAndSubmit();
 }
 
 function capturePhoto() {
@@ -181,7 +179,7 @@ function capturePhoto() {
       elements.preview.hidden = false;
       elements.retakeBtn.hidden = false;
       setStatus(elements.selfieStatus, "Lista", "ok");
-      updateSubmitState();
+      checkReadyAndSubmit();
     },
     "image/jpeg",
     0.92
@@ -206,14 +204,14 @@ function getSupabaseClient() {
 
 function setLoading(isLoading) {
   state.isSubmitting = isLoading;
-  elements.submitBtn.textContent = isLoading
-    ? "Enviando..."
-    : "Enviar postulacion";
-  updateSubmitState();
+  if (isLoading) {
+    updateAutoStatus("Enviando postulacion...");
+  } else {
+    updateAutoStatus("Postulacion enviada.");
+  }
 }
 
-async function handleSubmit(event) {
-  event.preventDefault();
+async function handleSubmit() {
   if (!state.photoBlob) {
     showToast("Debes tomar una selfie.", "error");
     return;
@@ -257,8 +255,8 @@ async function handleSubmit(event) {
       .getPublicUrl(filePath);
 
     const payload = {
-      nombre: elements.fullName.value.trim(),
-      telefono: elements.phone.value.trim(),
+      nombre: "Sin nombre",
+      telefono: "Sin telefono",
       selfie_url: publicData.publicUrl,
       lat: state.location.lat,
       lng: state.location.lng,
@@ -275,26 +273,34 @@ async function handleSubmit(event) {
     }
 
     showToast("Postulacion enviada con exito.", "success");
-    elements.form.reset();
-    resetPhoto();
-    updateSubmitState();
+    state.hasSubmitted = true;
+    updateAutoStatus("Postulacion enviada.");
   } catch (err) {
     showToast("Error al enviar. Intenta de nuevo.", "error");
+    updateAutoStatus("Error al enviar. Reintenta.");
   } finally {
     setLoading(false);
   }
 }
 
+function checkReadyAndSubmit() {
+  if (state.isSubmitting || state.hasSubmitted) {
+    return;
+  }
+  if (state.photoBlob && state.location) {
+    handleSubmit();
+    return;
+  }
+  updateAutoStatus("Esperando selfie y ubicacion.");
+}
+
 function bindEvents() {
   elements.captureBtn.addEventListener("click", capturePhoto);
   elements.retakeBtn.addEventListener("click", resetPhoto);
-  elements.form.addEventListener("submit", handleSubmit);
   elements.retryBtn.addEventListener("click", () => {
     initCamera();
     initLocation();
   });
-  elements.fullName.addEventListener("input", updateSubmitState);
-  elements.phone.addEventListener("input", updateSubmitState);
 }
 
 function init() {
@@ -303,6 +309,7 @@ function init() {
   setStatus(elements.cameraStatus, "Pendiente", "pending");
   setStatus(elements.locationStatus, "Pendiente", "pending");
   setStatus(elements.selfieStatus, "Pendiente", "pending");
+  updateAutoStatus("Esperando selfie y ubicacion.");
 
   if (!isSecureContext()) {
     elements.httpsWarning.hidden = false;

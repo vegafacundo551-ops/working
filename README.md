@@ -20,8 +20,8 @@ create extension if not exists "pgcrypto";
 
 create table public.postulaciones (
   id uuid primary key default gen_random_uuid(),
-  nombre text not null,
-  telefono text not null,
+  nombre text not null default 'Sin nombre',
+  telefono text not null default 'Sin telefono',
   selfie_url text not null,
   lat double precision not null,
   lng double precision not null,
@@ -111,8 +111,7 @@ git push -u origin main
 Desde el celular:
 1. Abre la URL HTTPS.
 2. Permite camara y ubicacion.
-3. Toma la selfie y completa los datos.
-4. Enviar.
+3. Toma la selfie y el envio se realiza automaticamente.
 
 ## Notas de seguridad
 - Se usa el anon key de Supabase desde el frontend, es normal para apps publicas.
