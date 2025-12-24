@@ -27,6 +27,8 @@ const state = {
   hasSubmitted: false,
 };
 
+let supabaseClient = null;
+
 function isSecureContext() {
   const host = window.location.hostname;
   return (
@@ -196,18 +198,23 @@ function isSupabaseConfigured() {
 }
 
 function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
   if (!window.supabase) {
     return null;
   }
-  return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+  return supabaseClient;
 }
 
 function setLoading(isLoading) {
   state.isSubmitting = isLoading;
   if (isLoading) {
     updateAutoStatus("Enviando postulacion...");
-  } else {
-    updateAutoStatus("Postulacion enviada.");
   }
 }
 
@@ -247,7 +254,9 @@ async function handleSubmit() {
       });
 
     if (uploadError) {
-      throw uploadError;
+      throw new Error(
+        `Error al subir selfie: ${uploadError.message || "desconocido"}`
+      );
     }
 
     const { data: publicData } = client.storage
@@ -269,15 +278,20 @@ async function handleSubmit() {
       .insert(payload);
 
     if (insertError) {
-      throw insertError;
+      throw new Error(
+        `Error al guardar datos: ${insertError.message || "desconocido"}`
+      );
     }
 
     showToast("Postulacion enviada con exito.", "success");
     state.hasSubmitted = true;
     updateAutoStatus("Postulacion enviada.");
   } catch (err) {
-    showToast("Error al enviar. Intenta de nuevo.", "error");
-    updateAutoStatus("Error al enviar. Reintenta.");
+    const message =
+      err && err.message ? err.message : "Error al enviar. Intenta de nuevo.";
+    showToast(message, "error");
+    updateAutoStatus(message);
+    console.error(err);
   } finally {
     setLoading(false);
   }
