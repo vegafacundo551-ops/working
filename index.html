@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Postulacion movil</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <p class="eyebrow">Reclutamiento movil</p>
+        <h1>Postulacion rapida con selfie y ubicacion</h1>
+        <p class="subtitle">
+          Para continuar, permite camara y ubicacion GPS. La selfie debe ser en
+          tiempo real.
+        </p>
+      </header>
+
+      <section class="card permissions" aria-live="polite">
+        <div class="card-title">
+          <h2>Permisos</h2>
+          <button class="btn btn-ghost" type="button" id="retry-permissions">
+            Reintentar permisos
+          </button>
+        </div>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Camara</span>
+            <span class="status-value" id="camera-status" data-state="pending">
+              Pendiente
+            </span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Ubicacion</span>
+            <span class="status-value" id="location-status" data-state="pending">
+              Pendiente
+            </span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Selfie</span>
+            <span class="status-value" id="selfie-status" data-state="pending">
+              Pendiente
+            </span>
+          </div>
+        </div>
+        <div class="location-panel">
+          <span class="badge" id="location-badge">Ubicacion no capturada</span>
+          <p class="location-details" id="location-details">
+            Lat/Lng: --
+          </p>
+        </div>
+        <p class="hint" id="https-warning" hidden>
+          Esta pagina requiere HTTPS para acceder a camara y ubicacion.
+        </p>
+      </section>
+
+      <section class="card camera">
+        <div class="card-title">
+          <h2>Selfie en tiempo real</h2>
+          <span class="hint">Usa la camara frontal.</span>
+        </div>
+        <div class="camera-stage">
+          <video
+            id="video"
+            autoplay
+            playsinline
+            muted
+            poster=""
+          ></video>
+          <canvas id="photo-canvas" hidden></canvas>
+          <img id="photo-preview" alt="Selfie capturada" hidden />
+        </div>
+        <div class="button-row">
+          <button class="btn" type="button" id="capture-btn">
+            Tomar selfie
+          </button>
+          <button class="btn btn-outline" type="button" id="retake-btn" hidden>
+            Tomar otra
+          </button>
+        </div>
+        <p class="hint" id="camera-hint">
+          Si la camara no se activa, revisa los permisos del navegador.
+        </p>
+      </section>
+
+      <section class="card form">
+        <div class="card-title">
+          <h2>Tus datos</h2>
+          <span class="hint">Completa todos los campos.</span>
+        </div>
+        <form id="postulation-form" autocomplete="on">
+          <label class="field">
+            Nombre completo
+            <input
+              type="text"
+              id="full-name"
+              name="nombre"
+              placeholder="Ej: Maria Lopez"
+              required
+              autocomplete="name"
+            />
+          </label>
+          <label class="field">
+            Telefono
+            <input
+              type="tel"
+              id="phone"
+              name="telefono"
+              placeholder="Ej: +54 9 11 1234 5678"
+              required
+              autocomplete="tel"
+            />
+          </label>
+          <button class="btn btn-primary" id="submit-btn" type="submit" disabled>
+            Enviar postulacion
+          </button>
+        </form>
+        <p class="hint">
+          No se puede enviar sin selfie y ubicacion. Tu informacion se guarda en
+          Supabase.
+        </p>
+      </section>
+
+      <footer class="footer">
+        <p>
+          Usamos tu ubicacion, fecha/hora y user agent solo para validacion de
+          postulacion.
+        </p>
+      </footer>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
