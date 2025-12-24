@@ -210,7 +210,7 @@ function scheduleFallbackCapture() {
     if (!state.photoBlob && state.cameraReady) {
       capturePhoto(true);
     }
-  }, 1200);
+  }, 700);
 }
 
 function startFaceDetection() {
@@ -231,7 +231,7 @@ function startFaceDetection() {
     });
     state.faceDetector.setOptions({
       model: "short",
-      minDetectionConfidence: 0.6,
+      minDetectionConfidence: 0.4,
     });
     state.faceDetector.onResults((results) => {
       const hasFace =
@@ -249,6 +249,7 @@ function startFaceDetection() {
 
   state.faceDetectionActive = true;
   updateAutoStatus("Buscando rostro...");
+  scheduleFallbackCapture();
 
   const loop = async () => {
     if (!state.faceDetectionActive || state.autoCaptureDone) {
