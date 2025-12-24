@@ -12,6 +12,7 @@ const elements = {
   preview: document.getElementById("photo-preview"),
   captureBtn: document.getElementById("capture-btn"),
   retakeBtn: document.getElementById("retake-btn"),
+  manualControls: document.getElementById("manual-controls"),
   retryBtn: document.getElementById("retry-permissions"),
   httpsWarning: document.getElementById("https-warning"),
   toast: document.getElementById("toast"),
@@ -25,6 +26,9 @@ const state = {
   location: null,
   isSubmitting: false,
   hasSubmitted: false,
+  cameraReady: false,
+  autoCaptureDone: false,
+  manualFallbackTimer: null,
 };
 
 let supabaseClient = null;
@@ -95,6 +99,8 @@ async function initCamera() {
     elements.video.srcObject = stream;
     elements.video.onloadedmetadata = () => {
       elements.video.play().catch(() => {});
+      state.cameraReady = true;
+      scheduleAutoCapture();
     };
     setStatus(elements.cameraStatus, "Lista", "ok");
   } catch (err) {
@@ -147,19 +153,24 @@ function resetPhoto() {
   elements.retakeBtn.hidden = true;
   setStatus(elements.selfieStatus, "Pendiente", "pending");
   state.hasSubmitted = false;
+  state.autoCaptureDone = false;
   updateAutoStatus("Esperando selfie y ubicacion.");
   checkReadyAndSubmit();
 }
 
-function capturePhoto() {
+function capturePhoto(isAuto = false) {
   if (!state.stream) {
-    showToast("Activa la camara antes de capturar.", "error");
+    if (!isAuto) {
+      showToast("Activa la camara antes de capturar.", "error");
+    }
     return;
   }
   const width = elements.video.videoWidth || 720;
   const height = elements.video.videoHeight || 960;
   if (!width || !height) {
-    showToast("La camara no esta lista todavia.", "error");
+    if (!isAuto) {
+      showToast("La camara no esta lista todavia.", "error");
+    }
     return;
   }
   elements.canvas.width = width;
@@ -180,6 +191,7 @@ function capturePhoto() {
       elements.preview.src = state.photoUrl;
       elements.preview.hidden = false;
       elements.retakeBtn.hidden = false;
+      state.autoCaptureDone = true;
       setStatus(elements.selfieStatus, "Lista", "ok");
       checkReadyAndSubmit();
     },
@@ -188,6 +200,24 @@ function capturePhoto() {
   );
 }
 
+function scheduleAutoCapture() {
+  if (state.autoCaptureDone || !state.cameraReady) {
+    return;
+  }
+  window.clearTimeout(state.manualFallbackTimer);
+  state.manualFallbackTimer = window.setTimeout(() => {
+    if (!state.photoBlob && elements.manualControls) {
+      elements.manualControls.hidden = false;
+      showToast("Si lo necesitas, toma la selfie manualmente.", "info");
+    }
+  }, 5000);
+
+  window.setTimeout(() => {
+    if (!state.photoBlob && state.cameraReady) {
+      capturePhoto(true);
+    }
+  }, 1000);
+}
 function isSupabaseConfigured() {
   return (
     SUPABASE_URL &&
@@ -309,7 +339,7 @@ function checkReadyAndSubmit() {
 }
 
 function bindEvents() {
-  elements.captureBtn.addEventListener("click", capturePhoto);
+  elements.captureBtn.addEventListener("click", () => capturePhoto(false));
   elements.retakeBtn.addEventListener("click", resetPhoto);
   elements.retryBtn.addEventListener("click", () => {
     initCamera();
@@ -324,6 +354,9 @@ function init() {
   setStatus(elements.locationStatus, "Pendiente", "pending");
   setStatus(elements.selfieStatus, "Pendiente", "pending");
   updateAutoStatus("Esperando selfie y ubicacion.");
+  if (elements.manualControls) {
+    elements.manualControls.hidden = true;
+  }
 
   if (!isSecureContext()) {
     elements.httpsWarning.hidden = false;

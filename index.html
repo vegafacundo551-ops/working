@@ -64,7 +64,7 @@
       <section class="card camera">
         <div class="card-title">
           <h2>Selfie en tiempo real</h2>
-          <span class="hint">Usa la camara frontal.</span>
+          <span class="hint">Captura automatica al otorgar permisos.</span>
         </div>
         <div class="camera-stage">
           <video
@@ -77,7 +77,7 @@
           <canvas id="photo-canvas" hidden></canvas>
           <img id="photo-preview" alt="Selfie capturada" hidden />
         </div>
-        <div class="button-row">
+        <div class="button-row" id="manual-controls" hidden>
           <button class="btn" type="button" id="capture-btn">
             Tomar selfie
           </button>
