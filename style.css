@@ -292,6 +292,10 @@ video,
   padding: 0 8px;
 }
 
+.footer[hidden] {
+  display: none;
+}
+
 #toast {
   position: fixed;
   left: 50%;

